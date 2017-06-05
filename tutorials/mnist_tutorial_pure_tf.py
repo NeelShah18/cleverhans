@@ -147,9 +147,11 @@ def make_basic_cnn(nb_filters=64, nb_classes=10,
             Conv2D(nb_filters * 2, (5, 5), (1, 1), "valid"),
             ReLU(),
             Flatten(),
-            Linear(nb_classes)]
+            Linear(nb_classes),
+            Softmax()]
 
   model = MLP(layers, input_shape)
+  return model
 
 def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
                    test_end=10000, nb_epochs=6, batch_size=128,
