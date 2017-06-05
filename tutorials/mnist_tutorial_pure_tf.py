@@ -79,7 +79,7 @@ class Linear(Layer):
 
 class Conv2D(Layer):
 
-  def __init__(self, output_channels, strides, padding):
+  def __init__(self, output_channels, kernel_shape, strides, padding):
     self.__dict__.update(locals())
     del self.self
 
