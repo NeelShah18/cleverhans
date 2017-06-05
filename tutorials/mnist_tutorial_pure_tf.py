@@ -17,9 +17,65 @@ from tensorflow.python.platform import flags
 from cleverhans.utils_mnist import data_mnist
 from cleverhans.utils_tf import model_train, model_eval
 from cleverhans.attacks import FastGradientMethod
-from cleverhans.utils import cnn_model, AccuracyReport
+from cleverhans.utils import AccuracyReport
 
 FLAGS = flags.FLAGS
+
+"""
+CleverHans is intended to supply attacks and defense, not models.
+Users may apply CleverHans to many different kinds of models.
+In this tutorial, we show you an example of the kind of model
+you might build.
+"""
+
+class MLP(object):
+  """
+  An example of a bare bones multilayer perceptron (MLP) class.
+  """
+
+  def __init__(self, layers, input_shape):
+    self.layers = layers
+    self.input_shape = input_shape
+    for layer in self.layers:
+      layer.set_input_shape(input_shape)
+      input_shape = layer.get_output_shape()
+
+  def get_params(self):
+    out = []
+    for layer in self.layers:
+      out = ordered_union(out, layer.get_params())
+    return out
+
+  def fprop(self, x, return_all=False, set_ref=False):
+    states = []
+    for layer in self.layers:
+      if set_ref:
+        layer.ref = x
+      x = layer.fprop(x)
+      assert x is not None
+      states.append(x)
+    if return_all:
+      return states
+    return x
+
+class Layer(object):
+  def get_output_shape(self):
+    return self.output_shape
+
+class Linear(Layer):
+
+  def __init__(self, num_hid):
+    self.num_hid = num_hid
+
+  def set_input_shape(self, input_shape):
+    batch_size, dim = input_shape
+    self.input_shape = [batch_size, dim]
+    self.output_shape = [batch_size, self.num_hid]
+    self.W = tf.Variable(.005 * tf.random_normal([dim, self.num_hid], dtype=tf.float32))
+    self.b = tf.Variable(np.zeros((self.num_hid,)).astype('float32'))
+
+  def fprop(self, x):
+    return tf.matmul(x, self.W) + self.b
 
 
 def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
