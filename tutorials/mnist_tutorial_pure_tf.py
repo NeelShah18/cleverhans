@@ -10,6 +10,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import numpy as np
+
 import tensorflow as tf
 from tensorflow.python.platform import app
 from tensorflow.python.platform import flags
@@ -58,6 +60,9 @@ class MLP(object):
       return states
     return x
 
+  def __call__(self, x):
+    return self.fprop(x)
+
 class Layer(object):
   def get_output_shape(self):
     return self.output_shape
@@ -71,7 +76,7 @@ class Linear(Layer):
     batch_size, dim = input_shape
     self.input_shape = [batch_size, dim]
     self.output_shape = [batch_size, self.num_hid]
-    self.W = tf.Variable(.005 * tf.random_normal([dim, self.num_hid], dtype=tf.float32))
+    self.W = tf.Variable(.05 * tf.random_normal([dim, self.num_hid], dtype=tf.float32))
     self.b = tf.Variable(np.zeros((self.num_hid,)).astype('float32'))
 
   def fprop(self, x):
@@ -85,15 +90,25 @@ class Conv2D(Layer):
 
   def set_input_shape(self, input_shape):
     batch_size, rows, cols, input_channels = input_shape
-    self.kernels = tf.Variable(.005 * tf.random_normal([TODO],
+    kernel_shape = tuple(self.kernel_shape) + (input_channels,
+                                               self.output_channels)
+    assert len(kernel_shape) == 4
+    assert all(isinstance(e, int) for e in kernel_shape), kernel_shape
+    self.kernels = tf.Variable(.005 * tf.random_normal(kernel_shape,
                                                        dtype=tf.float32))
-    self.b = tf.Variable(np.zeros((self.output_channels,))).astype('float32')
-    dummy_batch = TODO
+    self.b = tf.Variable(np.zeros((self.output_channels,)).astype('float32'))
+    orig_input_batch_size = input_shape[0]
+    input_shape = list(input_shape)
+    input_shape[0] = 1
+    dummy_batch = tf.zeros(input_shape)
     dummy_output = self.fprop(dummy_batch)
-    self.output_shape = dummy_output.get_shape()
+    output_shape = [int(e) for e in dummy_output.get_shape()]
+    output_shape[0] = 1
+    self.output_shape = tuple(output_shape)
 
   def fprop(self, x):
-    return tf.nn.conv2d(x, self.kernels, strides, padding)
+    return tf.nn.conv2d(x, self.kernels,
+                        (1,) + tuple(self.strides) + (1,), self.padding)
 
 class ReLU(Layer):
 
@@ -133,18 +148,18 @@ class Flatten(Layer):
     for factor in shape[1:]:
       output_width *= factor
     self.output_width = output_width
-    self.output_shape = [shape[0], output_width]
+    self.output_shape = [None, output_width]
 
   def fprop(self, x):
-    return tf.reshape(x, self.output_shape)
+    return tf.reshape(x, [-1, self.output_width])
 
 def make_basic_cnn(nb_filters=64, nb_classes=10,
                    input_shape=(None, 28, 28, 1)):
-  layers = [Conv2D(nb_filters, (8, 8), (2, 2), "same"),
+  layers = [Conv2D(nb_filters, (8, 8), (2, 2), "SAME"),
             ReLU(),
-            Conv2D(nb_filters * 2, (6, 6), (2, 2), "valid"),
+            Conv2D(nb_filters * 2, (6, 6), (2, 2), "VALID"),
             ReLU(),
-            Conv2D(nb_filters * 2, (5, 5), (1, 1), "valid"),
+            Conv2D(nb_filters * 2, (5, 5), (1, 1), "VALID"),
             ReLU(),
             Flatten(),
             Linear(nb_classes),
@@ -194,7 +209,7 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
 
     # Define TF model graph
     model = make_basic_cnn()
-    preds = model(x)
+    preds = model.fprop(x)
     print("Defined TensorFlow model graph.")
 
     def evaluate():
@@ -218,7 +233,7 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     fgsm = FastGradientMethod(model, sess=sess)
     fgsm_params = {'eps': 0.3}
     adv_x = fgsm.generate(x, **fgsm_params)
-    preds_adv = model(adv_x)
+    preds_adv = model.fprop(adv_x)
 
     # Evaluate the accuracy of the MNIST model on adversarial examples
     eval_par = {'batch_size': batch_size}
