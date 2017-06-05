@@ -92,7 +92,6 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     :param learning_rate: learning rate for training
     :return: an AccuracyReport object
     """
-    keras.layers.core.K.set_learning_phase(0)
 
     # Object used to keep track of (and return) key accuracies
     report = AccuracyReport()
@@ -100,19 +99,8 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     # Set TF random seed to improve reproducibility
     tf.set_random_seed(1234)
 
-    if not hasattr(backend, "tf"):
-        raise RuntimeError("This tutorial requires keras to be configured"
-                           " to use the TensorFlow backend.")
-
-    # Image dimensions ordering should follow the Theano convention
-    if keras.backend.image_dim_ordering() != 'tf':
-        keras.backend.set_image_dim_ordering('tf')
-        print("INFO: '~/.keras/keras.json' sets 'image_dim_ordering' to "
-              "'th', temporarily setting to 'tf'")
-
-    # Create TF session and set as Keras backend session
+    # Create TF session
     sess = tf.Session()
-    keras.backend.set_session(sess)
 
     # Get MNIST test data
     X_train, Y_train, X_test, Y_test = data_mnist(train_start=train_start,
