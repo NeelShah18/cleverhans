@@ -77,6 +77,24 @@ class Linear(Layer):
   def fprop(self, x):
     return tf.matmul(x, self.W) + self.b
 
+class Conv2D(Layer):
+
+  def __init__(self, output_channels, strides, padding):
+    self.__dict__.update(locals())
+    del self.self
+
+  def set_input_shape(self, input_shape):
+    batch_size, rows, cols, input_channels = input_shape
+    self.kernels = tf.Variable(.005 * tf.random_normal([TODO],
+                                                       dtype=tf.float32))
+    self.b = tf.Variable(np.zeros((self.output_channels,))).astype('float32')
+    dummy_batch = TODO
+    dummy_output = self.fprop(dummy_batch)
+    self.output_shape = dummy_output.get_shape()
+
+  def fprop(self, x):
+    return tf.nn.conv2d(x, self.kernels, strides, padding)
+
 
 def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
                    test_end=10000, nb_epochs=6, batch_size=128,
