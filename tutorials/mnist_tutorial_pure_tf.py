@@ -95,7 +95,51 @@ class Conv2D(Layer):
   def fprop(self, x):
     return tf.nn.conv2d(x, self.kernels, strides, padding)
 
-def make_basic_cnn(nb_filters, nb_classes, input_shape):
+class ReLU(Layer):
+
+  def __init__(self):
+    pass
+
+  def set_input_shape(self, shape):
+    self.input_shape = shape
+    self.output_shape = shape
+
+  def get_output_shape(self):
+    return self.output_shape
+
+  def fprop(self, x):
+    return tf.nn.relu(x)
+
+class Softmax(Layer):
+
+  def __init__(self):
+    pass
+
+  def set_input_shape(self, shape):
+    self.input_shape = shape
+    self.output_shape = shape
+
+  def fprop(self, x):
+    return tf.nn.softmax(x)
+
+class Flatten(Layer):
+
+  def __init__(self):
+    pass
+
+  def set_input_shape(self, shape):
+    self.input_shape = shape
+    output_width = 1
+    for factor in shape[1:]:
+      output_width *= factor
+    self.output_width = output_width
+    self.output_shape = [shape[0], output_width]
+
+  def fprop(self, x):
+    return tf.reshape(x, self.output_shape)
+
+def make_basic_cnn(nb_filters=64, nb_classes=10,
+                   input_shape=(None, 28, 28, 1)):
   layers = [Conv2D(nb_filters, (8, 8), (2, 2), "same"),
             ReLU(),
             Conv2D(nb_filters * 2, (6, 6), (2, 2), "valid"),
