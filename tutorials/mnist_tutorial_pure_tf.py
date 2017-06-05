@@ -95,6 +95,17 @@ class Conv2D(Layer):
   def fprop(self, x):
     return tf.nn.conv2d(x, self.kernels, strides, padding)
 
+def make_basic_cnn(nb_filters, nb_classes, input_shape):
+  layers = [Conv2D(nb_filters, (8, 8), (2, 2), "same"),
+            ReLU(),
+            Conv2D(nb_filters * 2, (6, 6), (2, 2), "valid"),
+            ReLU(),
+            Conv2D(nb_filters * 2, (5, 5), (1, 1), "valid"),
+            ReLU(),
+            Flatten(),
+            Linear(nb_classes)]
+
+  model = MLP(layers, input_shape)
 
 def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
                    test_end=10000, nb_epochs=6, batch_size=128,
