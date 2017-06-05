@@ -76,7 +76,10 @@ class Linear(Layer):
     batch_size, dim = input_shape
     self.input_shape = [batch_size, dim]
     self.output_shape = [batch_size, self.num_hid]
-    self.W = tf.Variable(.05 * tf.random_normal([dim, self.num_hid], dtype=tf.float32))
+    init = tf.random_normal([dim, self.num_hid], dtype=tf.float32)
+    init = init / tf.sqrt(1e-7 + tf.reduce_sum(tf.square(init), axis=0,
+                                               keep_dims=True))
+    self.W = tf.Variable(init)
     self.b = tf.Variable(np.zeros((self.num_hid,)).astype('float32'))
 
   def fprop(self, x):
@@ -94,8 +97,10 @@ class Conv2D(Layer):
                                                self.output_channels)
     assert len(kernel_shape) == 4
     assert all(isinstance(e, int) for e in kernel_shape), kernel_shape
-    self.kernels = tf.Variable(.005 * tf.random_normal(kernel_shape,
-                                                       dtype=tf.float32))
+    init = tf.random_normal(kernel_shape, dtype=tf.float32)
+    init = init / tf.sqrt(1e-7 + tf.reduce_sum(tf.square(init),
+                                               axis=(0, 1, 2)))
+    self.kernels = tf.Variable(init)
     self.b = tf.Variable(np.zeros((self.output_channels,)).astype('float32'))
     orig_input_batch_size = input_shape[0]
     input_shape = list(input_shape)
