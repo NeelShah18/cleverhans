@@ -1,10 +1,15 @@
+"""
+This tutorial shows how to generate some simple adversarial examples
+and train a model using adversarial training using nothing but pure
+TensorFlow.
+It is very similar to mnist_tutorial_tf.py, which does the same thing
+but with dependence on keras.
+"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import keras
-from keras import backend
 import tensorflow as tf
 from tensorflow.python.platform import app
 from tensorflow.python.platform import flags
