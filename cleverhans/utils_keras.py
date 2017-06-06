@@ -13,6 +13,7 @@ if LooseVersion(keras.__version__) >= LooseVersion('2.0.0'):
 else:
     from keras.layers import Convolution2D
 
+
 def conv_2d(filters, kernel_shape, strides, padding, input_shape=None):
     """
     Defines the right convolutional layer according to the
